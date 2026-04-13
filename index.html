@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spill & Thrill</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- GLOBAL PAGE STYLES --- */
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background-color: #2b1055; /* Base dark purple */
+            /* This creates the cool dot pattern background */
+            background-image: radial-gradient(#1e0b3b 2px, transparent 2px), radial-gradient(#1e0b3b 2px, transparent 2px);
+            background-size: 40px 40px;
+            background-position: 0 0, 20px 20px;
+            color: white; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; /* Takes up full screen height */
+            margin: 0;
+            padding: 20px; 
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        /* --- UI COMPONENT STYLES --- */
+        /* Language Selector Floating Top Right */
+        .lang-selector {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .lang-selector select {
+            background: #2a2a40;
+            color: white;
+            border: 2px solid #3d3d5c;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        
+        .lang-selector select:hover {
+            border-color: #1e90ff;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Fredoka', sans-serif;
+            letter-spacing: 1px;
+            margin-top: 0;
+        }
+
+        /* The main floating window */
+        .card { 
+            background: #1e1e2f; 
+            padding: 2.5rem; 
+            border-radius: 20px; 
+            width: 100%; 
+            max-width: 450px; 
+            text-align: center; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6), 0 0 0 4px rgba(255,255,255,0.03);
+        }
+
+        /* 3D Button Styles */
+        button { 
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1.2rem;
+            width: 100%; 
+            padding: 15px; 
+            margin: 12px 0; 
+            border: none; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            transition: all 0.1s ease; 
+            text-transform: uppercase;
+        }
+
+        button:active {
+            transform: translateY(6px); /* Pushes button down when clicked */
+        }
+
+        /* Individual Button Colors (Normal and Pressed states) */
+        .btn-create { 
+            background: #ff4757; 
+            color: white; 
+            box-shadow: 0 6px #cc1e2c; 
+        }
+        .btn-create:active { box-shadow: 0 0 #cc1e2c; }
+
+        .btn-join { 
+            background: #1e90ff; 
+            color: white; 
+            box-shadow: 0 6px #006eed; 
+        }
+        .btn-join:active { box-shadow: 0 0 #006eed; }
+
+        #startBtn {
+            background: #ffa502;
+            color: #fff;
+            box-shadow: 0 6px #cc8400;
+        }
+        #startBtn:active { box-shadow: 0 0 #cc8400; }
+
+        #nextRevealBtn, #playAgainBtn {
+            background: #2ed573;
+            color: white;
+            box-shadow: 0 6px #1e9f54;
+        }
+        #nextRevealBtn:active, #playAgainBtn:active { box-shadow: 0 0 #1e9f54; }
+
+        /* Text Input Boxes */
+        input, textarea { 
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            width: 100%; 
+            padding: 14px; 
+            margin: 5px 0 20px 0; 
+            border-radius: 10px; 
+            border: 2px solid #3d3d5c; 
+            background: #2a2a40; 
+            color: white; 
+            box-sizing: border-box; 
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: #ff4757; 
+        }
+
+        /* Text Colors for the specific prompts */
+        .header-q { color: #1dd1a1; margin-bottom: 5px; font-size: 1.1rem; }
+        .header-d { color: #ff4757; margin-bottom: 5px; font-size: 1.1rem; }
+        .header-g { color: #ffa502; margin-bottom: 5px; font-size: 1.1rem; }
+
+        .logo-title {
+            font-size: 2.5rem;
+            color: #fff;
+            text-shadow: 3px 3px 0 #ff4757, -1px -1px 0 #1e90ff;
+            margin-bottom: 20px;
+        }
+
+        /* Soft fade-in-and-out animation for waiting text */
+        .pulse-text {
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="lang-selector">
+        <select id="langSelect" onchange="changeLanguage(this.value)">
+            <option value="en">English</option>
+            <option value="es">Español</option>
+        </select>
+    </div>
+
+    <div id="lobby-screen" class="card">
+        <h1 class="logo-title" data-i18n="logoTitle">Spill & Thrill</h1>
+        
+        <input type="text" id="nameInput" data-i18n-placeholder="username" placeholder="Enter Username...">
+        <hr style="border: 1px solid #3d3d5c; margin: 25px 0;">
+
+        <button class="btn-create" data-i18n="btnCreate" onclick="createRoom()">Create New Party</button>
+        <p style="font-size: 1.1rem;"><span data-i18n="roomCodeText">Room Code: </span> <span id="codeDisplay" style="color: #2ed573; font-weight: bold; font-size: 1.3rem;">-----</span></p>
+        
+        <button id="startBtn" style="display:none;" data-i18n="btnStart" onclick="sendStartRequest()">START GAME</button>
+        
+        <input type="number" id="joinInput" data-i18n-placeholder="joinCode" placeholder="5-Digit Code...">
+        <button class="btn-join" data-i18n="btnJoin" onclick="joinRoom()">Join Party</button>
+        
+        <div id="log" style="font-size: 0.85rem; color: #a4b0be; margin-top: 15px; min-height: 20px;"></div>
+    </div>
+
+    <div id="writing-screen" class="card" style="display: none;">
+        <h2 style="color: #ffa502; font-size: 2rem;" data-i18n="writeTitle">Write Prompts!</h2>
+        <h1 id="timerDisplay" style="color: #ff4757; font-size: 3rem; margin: 0; text-shadow: 2px 2px 0 #cc1e2c;">120</h1> 
+        <p style="font-size: 0.9rem; color: #a4b0be; margin-bottom: 25px;" data-i18n="writeSub">Fill out all three boxes below.</p>
+        
+        <h4 class="header-q"><span data-i18n="qFor">Question for: </span> <span id="qTargetName" style="color: #fff;">---</span></h4>
+        <input type="text" id="qInput" data-i18n-placeholder="qPlaceholder" placeholder="What is your biggest fear?">
+        
+        <h4 class="header-d"><span data-i18n="dFor">Dare for: </span> <span id="dTargetName" style="color: #fff;">---</span></h4>
+        <input type="text" id="dInput" data-i18n-placeholder="dPlaceholder" placeholder="Do 10 pushups.">
+        
+        <h4 class="header-g"><span data-i18n="gFor">Gossip about: </span> <span id="gTargetName" style="color: #fff;">---</span></h4>
+        <input type="text" id="gInput" data-i18n-placeholder="gPlaceholder" placeholder="I heard they sleep with a teddy bear.">
+
+        <button class="btn-create" style="background: #2ed573; box-shadow: 0 6px #1e9f54;" data-i18n="btnSubmit" onclick="submitAll()">SUBMIT ALL</button>
+    </div>
+
+    <div id="waiting-screen" class="card" style="display: none;">
+        <h2 style="color: #1e90ff; font-size: 2.5rem;" data-i18n="waitTitle">Waiting...</h2>
+        <p class="pulse-text" style="font-size: 1.2rem; color: #a4b0be;" data-i18n="waitSub">Waiting for others to finish writing.</p>
+    </div>
+
+    <div id="reveal-screen" class="card" style="display: none;">
+        <h1 id="revealCategory" style="color: #ffa502; font-size: 2.5rem; margin-bottom: 5px;">---</h1>
+        <h3 style="color: #a4b0be; margin-top: 0;"><span data-i18n="targetText">Target: </span> <span id="revealTarget" style="color: #fff; font-size: 1.5rem;">---</span></h3>
+        
+        <div style="background: #2a2a40; padding: 30px 20px; border-radius: 15px; margin: 25px 0; border: 2px dashed #3d3d5c;">
+            <p id="revealText" style="font-style: italic; font-size: 1.4rem; font-weight: 600; margin: 0; color: #2ed573;" data-i18n="revealDefault">Waiting for host to start...</p>
+        </div>
+        
+        <button id="nextRevealBtn" style="display:none;" data-i18n="btnNext" onclick="nextReveal()">NEXT PROMPT ➔</button>
+        <button id="playAgainBtn" style="display:none;" data-i18n="btnPlayAgain" onclick="playAgain()">PLAY AGAIN</button>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+        // ==========================================
+        // 1. LOCALIZATION (LANGUAGE) DICTIONARY
+        // ==========================================
+        const translations = {
+            en: {
+                logoTitle: "Spill & Thrill",
+                username: "Enter Username...",
+                btnCreate: "Create New Party",
+                roomCodeText: "Room Code: ",
+                btnStart: "START GAME",
+                joinCode: "5-Digit Code...",
+                btnJoin: "Join Party",
+                writeTitle: "Write Prompts!",
+                writeSub: "Fill out all three boxes below.",
+                qFor: "Question for: ",
+                qPlaceholder: "What is your biggest fear?",
+                dFor: "Dare for: ",
+                dPlaceholder: "Do 10 pushups.",
+                gFor: "Gossip about: ",
+                gPlaceholder: "I heard they sleep with a teddy bear.",
+                btnSubmit: "SUBMIT ALL",
+                waitTitle: "Waiting...",
+                waitSub: "Waiting for others to finish writing.",
+                targetText: "Target: ",
+                revealDefault: "Waiting for host to start...",
+                btnNext: "NEXT PROMPT ➔",
+                btnPlayAgain: "PLAY AGAIN",
+                // JS Alerts & Dynamic Text
+                confirmLeave: "You are already in a party! Are you sure you want to leave?",
+                errorNoName: "Enter a username first!",
+                errorNoCode: "Enter name and code!",
+                hostNext: "Host, click 'Next Prompt' to begin!",
+                playerWait: "Look at the Host's screen (or wait for the first prompt).",
+                newHost: "You are the new host! Click 'Next Prompt' to continue.",
+                gameOver: "GAME OVER",
+                everyone: "Everyone!",
+                allRead: "All prompts have been read.",
+                timeOutQ: "Ran out of time to ask a question!",
+                timeOutD: "Ran out of time to give a dare!",
+                timeOutG: "Ran out of time to gossip!"
+            },
+            es: {
+                logoTitle: "Retos y Secretos",
+                username: "Introduce tu usuario...",
+                btnCreate: "Crear Nueva Sala",
+                roomCodeText: "Código: ",
+                btnStart: "EMPEZAR PARTIDA",
+                joinCode: "Código de 5 dígitos...",
+                btnJoin: "Unirse a la Sala",
+                writeTitle: "¡Escribe tus retos!",
+                writeSub: "Rellena los tres espacios de abajo.",
+                qFor: "Pregunta para: ",
+                qPlaceholder: "¿Cuál es tu mayor miedo?",
+                dFor: "Reto para: ",
+                dPlaceholder: "Haz 10 flexiones.",
+                gFor: "Chisme sobre: ",
+                gPlaceholder: "Escuché que duerme con un peluche.",
+                btnSubmit: "ENVIAR TODO",
+                waitTitle: "Esperando...",
+                waitSub: "Esperando a que los demás terminen.",
+                targetText: "Objetivo: ",
+                revealDefault: "Esperando al anfitrión...",
+                btnNext: "SIGUIENTE ➔",
+                btnPlayAgain: "JUGAR DE NUEVO",
+                // JS Alerts & Dynamic Text
+                confirmLeave: "¡Ya estás en una sala! ¿Seguro que quieres salir?",
+                errorNoName: "¡Ingresa un usuario primero!",
+                errorNoCode: "¡Ingresa tu nombre y el código!",
+                hostNext: "Anfitrión, haz clic en 'Siguiente' para empezar.",
+                playerWait: "Mira la pantalla del Anfitrión.",
+                newHost: "¡Eres el nuevo anfitrión! Haz clic en 'Siguiente'.",
+                gameOver: "FIN DEL JUEGO",
+                everyone: "¡Todos!",
+                allRead: "Se han leído todos los textos.",
+                timeOutQ: "¡Se acabó el tiempo para preguntar!",
+                timeOutD: "¡Se acabó el tiempo para el reto!",
+                timeOutG: "¡Se acabó el tiempo para el chisme!"
+            }
+        };
+
+        let currentLang = 'en';
+
+        // Function that swaps all the text on the screen when language changes
+        function changeLanguage(lang) {
+            currentLang = lang;
+            
+            // Swap standard text tags (h1, p, span, buttons)
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) el.innerHTML = translations[lang][key];
+            });
+
+            // Swap input placeholders
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (translations[lang][key]) el.placeholder = translations[lang][key];
+            });
+            
+            // If the game is over and they switch languages, translate the game over text
+            if (document.getElementById('revealCategory').innerText === "GAME OVER") {
+                document.getElementById('revealCategory').innerText = translations[currentLang].gameOver;
+                document.getElementById('revealTarget').innerText = translations[currentLang].everyone;
+                document.getElementById('revealText').innerText = translations[currentLang].allRead;
+            }
+        }
+
+        // --- AUTO DETECT BROWSER LANGUAGE ON LOAD ---
+        window.addEventListener("DOMContentLoaded", () => {
+            const userLang = navigator.language || navigator.userLanguage;
+            if (userLang.toLowerCase().startsWith('es')) {
+                document.getElementById('langSelect').value = 'es';
+                changeLanguage('es');
+            } else {
+                changeLanguage('en');
+            }
+        });
+
+        // ==========================================
+        // 2. SOCKET CONNECTION & GAME STATE
+        // ==========================================
+
+        // NOTE: Change this to your live Render URL when you upload the game!
+        const socket = io('http://localhost:3000');
+        let myRoomCode = "";
+        let myName = "";
+        let isHost = false; // Tracks if this specific player has control of the flow
+        let myTargets = {}; // Stores who this player is writing about
+
+        // Called when they click "Create New Party"
+        function createRoom() {
+            if (myRoomCode) {
+                const sure = confirm(translations[currentLang].confirmLeave);
+                if (!sure) return;
+                socket.emit('leave-room'); 
+            }
+
+            myName = document.getElementById('nameInput').value;
+            if(!myName) return alert(translations[currentLang].errorNoName);
+            socket.emit('create-room', { username: myName });
+        }
+
+        // Called when they click "Join Party"
+        function joinRoom() {
+            if (myRoomCode) {
+                const sure = confirm(translations[currentLang].confirmLeave);
+                if (!sure) return;
+                socket.emit('leave-room'); 
+            }
+
+            myName = document.getElementById('nameInput').value;
+            const code = document.getElementById('joinInput').value;
+            if(!myName || !code) return alert(translations[currentLang].errorNoCode);
+            socket.emit('join-room', { username: myName, code: code });
+        }
+
+        // Sent from server if the original host leaves the game
+        socket.on('you-are-new-host', () => {
+            isHost = true;
+            // Unhide buttons based on what screen they are currently looking at
+            if (document.getElementById('lobby-screen').style.display !== "none") {
+                document.getElementById('startBtn').style.display = "block";
+            }
+            if (document.getElementById('reveal-screen').style.display !== "none") {
+                if (document.getElementById('revealCategory').innerText === translations[currentLang].gameOver) {
+                    document.getElementById('playAgainBtn').style.display = "block";
+                } else {
+                    document.getElementById('nextRevealBtn').style.display = "block";
+                    document.getElementById('revealText').innerText = translations[currentLang].newHost;
+                }
+            }
+        });
+
+        // Tells the server to start the math and assign targets
+        function sendStartRequest() {
+            socket.emit('start-game-request', myRoomCode);
+        }
+
+        // Updates the lobby UI when joining/creating succeeds
+        socket.on('room-status', (data) => {
+            myRoomCode = data.code;
+            isHost = data.isHost;
+            document.getElementById('codeDisplay').innerText = data.code;
+            if(data.isHost) document.getElementById('startBtn').style.display = "block";
+        });
+
+        // Appends tiny gray text messages to the bottom of the lobby
+        socket.on('update-log', (msg) => {
+            document.getElementById('log').innerHTML += `<p style="margin: 5px 0;">${msg}</p>`;
+        });
+
+        // ==========================================
+        // 3. PHASE 1: WRITING LOGIC
+        // ==========================================
+
+        // Triggers when the host clicks start. Receives the 3 targets from server.
+        socket.on('navigate-to-writing', (targets) => {
+            document.getElementById('lobby-screen').style.display = "none";
+            document.getElementById('writing-screen').style.display = "block";
+
+            myTargets = targets; // Save to local memory
+            document.getElementById('qTargetName').innerText = targets.qTarget;
+            document.getElementById('dTargetName').innerText = targets.dTarget;
+            document.getElementById('gTargetName').innerText = targets.gTarget;
+        });
+
+        // Packages the 3 answers and sends them to the server pool
+        function submitAll() {
+            // Provide default text so the game doesn't break if they left a box blank
+            const qText = document.getElementById('qInput').value || translations[currentLang].timeOutQ;
+            const dText = document.getElementById('dInput').value || translations[currentLang].timeOutD;
+            const gText = document.getElementById('gInput').value || translations[currentLang].timeOutG;
+
+            const data = {
+                qTarget: myTargets.qTarget, qText: qText,
+                dTarget: myTargets.dTarget, dText: dText,
+                gTarget: myTargets.gTarget, gText: gText
+            };
+
+            socket.emit('submit-all-prompts', data);
+            
+            document.getElementById('writing-screen').style.display = "none";
+            document.getElementById('waiting-screen').style.display = "block";
+        }
+
+        // Triggers once the server confirms EVERY player has submitted their prompts
+        socket.on('all-prompts-ready', () => {
+            document.getElementById('waiting-screen').style.display = "none";
+            document.getElementById('reveal-screen').style.display = "block";
+            
+            if (isHost) {
+                document.getElementById('nextRevealBtn').style.display = "block";
+                document.getElementById('revealText').innerText = translations[currentLang].hostNext;
+            } else {
+                document.getElementById('revealText').innerText = translations[currentLang].playerWait;
+            }
+        });
+
+        // Tells server to pull one random prompt out of the pool
+        function nextReveal() {
+            socket.emit('next-reveal');
+        }
+
+        // Displays the prompt text sent back by the server
+        socket.on('display-result', (prompt) => {
+            // Check translation for category
+            let displayCategory = prompt.category.toUpperCase();
+            if (currentLang === 'es') {
+                if (displayCategory === 'QUESTION') displayCategory = 'PREGUNTA';
+                if (displayCategory === 'DARE') displayCategory = 'RETO';
+                if (displayCategory === 'GOSSIP') displayCategory = 'CHISME';
+            }
+            
+            document.getElementById('revealCategory').innerText = displayCategory;
+            document.getElementById('revealTarget').innerText = prompt.target;
+            document.getElementById('revealText').innerText = `"${prompt.text}"`;
+        });
+
+        // Triggers when the prompt pool on the server is empty
+        socket.on('game-over', () => {
+            document.getElementById('revealCategory').innerText = translations[currentLang].gameOver;
+            document.getElementById('revealTarget').innerText = translations[currentLang].everyone;
+            document.getElementById('revealText').innerText = translations[currentLang].allRead;
+            document.getElementById('nextRevealBtn').style.display = "none";
+            
+            if (isHost) {
+                document.getElementById('playAgainBtn').style.display = "block";
+            }
+        });
+
+        // Updates the big red clock on the writing screen
+        socket.on('timer-update', (timeLeft) => {
+            document.getElementById('timerDisplay').innerText = timeLeft;
+        });
+
+        // If time runs out, force them to submit whatever they have typed so far
+        socket.on('force-submit', () => {
+            if (document.getElementById('writing-screen').style.display === "block") {
+                submitAll();
+            }
+        });
+
+        // ==========================================
+        // 4. RESTART LOGIC
+        // ==========================================
+        function playAgain() {
+            socket.emit('play-again-request'); // Tells server to clear arrays
+        }
+
+        // Flips the UI back to the lobby state for another round
+        socket.on('reset-to-lobby', () => {
+            document.getElementById('reveal-screen').style.display = "none";
+            document.getElementById('writing-screen').style.display = "none";
+            document.getElementById('waiting-screen').style.display = "none";
+            document.getElementById('lobby-screen').style.display = "block";
+            
+            // Empty the inputs so they don't see their old answers
+            document.getElementById('qInput').value = "";
+            document.getElementById('dInput').value = "";
+            document.getElementById('gInput').value = "";
+            
+            document.getElementById('playAgainBtn').style.display = "none";
+            document.getElementById('revealText').innerText = translations[currentLang].revealDefault;
+        });
+    </script>
+</body>
+</html>
